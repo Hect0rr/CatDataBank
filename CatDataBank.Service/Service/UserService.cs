@@ -34,8 +34,6 @@ namespace CatDataBank.Service
             _appSettings = appSettings.Value;
         }
 
-
-
         public String Authenticate(string email, string password)
         {
             if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
@@ -98,7 +96,7 @@ namespace CatDataBank.Service
             return _context.Users.Find(id);
         }
 
-        private static void CreatePasswordHash(string password, out byte[] passwordHash, out byte[] passwordSalt)
+        internal virtual void CreatePasswordHash(string password, out byte[] passwordHash, out byte[] passwordSalt)
         {
             if (password == null) throw new ArgumentNullException("password");
             if (string.IsNullOrWhiteSpace(password)) throw new ArgumentException("Value cannot be empty or whitespace only string.", "password");
@@ -110,7 +108,7 @@ namespace CatDataBank.Service
             }
         }
 
-        private static bool VerifyPasswordHash(string password, byte[] storedHash, byte[] storedSalt)
+        internal virtual bool VerifyPasswordHash(string password, byte[] storedHash, byte[] storedSalt)
         {
             if (password == null) throw new ArgumentNullException("password");
             if (string.IsNullOrWhiteSpace(password)) throw new ArgumentException("Value cannot be empty or whitespace only string.", "password");
