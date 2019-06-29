@@ -11,8 +11,4 @@ export class AppComponent {
 
   constructor(private authService: AuthenticationService){}
 
-  ngOnInit()
-  {
-    this.authService.logout()
-  }
 }
