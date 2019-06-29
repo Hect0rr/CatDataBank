@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { CatService } from '../gateway/CdbService/cat.service';
 
 @Component({
   selector: 'app-cat',
@@ -7,9 +8,12 @@ import { Component, OnInit } from '@angular/core';
 })
 export class CatComponent implements OnInit {
 
-  constructor() { }
+  constructor(private catService: CatService) { }
 
   ngOnInit() {
+
+    this.catService.getCats().subscribe(data => console.log(data));
+
   }
 
 }

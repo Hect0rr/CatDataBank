@@ -11,6 +11,9 @@ import { HomeComponent } from './home/home.component';
 import { LoginComponent } from './login/login.component';
 import { CatComponent } from './cat/cat.component';
 import { AuthGuard } from './guard/auth.guard';
+import { PublicationService } from './service/publication.service';
+import { ErrorInterceptor } from './helper/error-interceptor';
+import { TokenInterceptor } from './helper/token-interceptor';
 
 @NgModule({
   declarations: [
@@ -31,7 +34,9 @@ import { AuthGuard } from './guard/auth.guard';
     ]),
     ReactiveFormsModule
   ],
-  providers: [AuthGuard],
+  providers: [AuthGuard,
+    { provide: HTTP_INTERCEPTORS, useClass: ErrorInterceptor, multi: true },
+    { provide: HTTP_INTERCEPTORS, useClass: TokenInterceptor, multi: true }],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

@@ -1,4 +1,7 @@
 import { Component } from '@angular/core';
+import { AuthenticationService } from '../service/authentication.service';
+import { BehaviorSubject, Observable } from 'rxjs';
+import { PublicationService } from '../service/publication.service';
 
 @Component({
   selector: 'app-nav-menu',
@@ -7,6 +10,15 @@ import { Component } from '@angular/core';
 })
 export class NavMenuComponent {
   isExpanded = false;
+  loginText: String;
+
+  constructor(private pubService: PublicationService){}
+
+  ngOnInit() {
+    this.pubService.getLogText().subscribe(logText => this.loginText = logText);
+  }
+
+ 
 
   collapse() {
     this.isExpanded = false;
