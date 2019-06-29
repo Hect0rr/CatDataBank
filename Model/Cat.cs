@@ -6,7 +6,6 @@ namespace CatDataBank.Model
         public string BreedName { get; set; }
         public string Quality { get; set; }
         public string Description { get; set; }
-        public string ImageLink { get; set; }
         public decimal AveragePrice { get; set; }
     }
 }
