@@ -4,8 +4,10 @@ using CatDataBank.Model;
 
 namespace CatDataBank.Helper
 {
-    public class AutoMapperProfile
+    public interface IAutoMapperProfile { IMapper GetMapper(); }
+    public class AutoMapperProfile : IAutoMapperProfile
     {
+        private IMapper _mapper;
         public AutoMapperProfile()
         {
             var config = new MapperConfiguration(cfg =>
@@ -13,7 +15,12 @@ namespace CatDataBank.Helper
                 cfg.CreateMap<User, UserDto>();
                 cfg.CreateMap<UserDto, User>();
             });
-            IMapper mapper = config.CreateMapper();
+            _mapper = config.CreateMapper();
+        }
+
+        public IMapper GetMapper()
+        {
+            return _mapper;
         }
     }
 }

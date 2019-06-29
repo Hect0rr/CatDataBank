@@ -1,11 +1,15 @@
+using System.Threading.Tasks;
+using System.Text;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.SpaServices.AngularCli;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using CatDataBank.Service;
+using CatDataBank.Helper;
 using Microsoft.AspNetCore.Http;
 using CatDataBank.Model;
 
@@ -20,23 +24,45 @@ namespace CatDataBank
 
         public IConfiguration Configuration { get; }
 
-        // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
+
+            //Authentication
+            services.Configure<AppSettings>(Configuration.GetSection("AppSettings"));
+            var appSettings = Configuration.GetSection("AppSettings").Get<AppSettings>();
+            var key = Encoding.ASCII.GetBytes(appSettings.Secret);
+            services.AddAuthentication(x =>
+                       {
+                           x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                           x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                       }).AddJwtBearer(x =>
+                       {
+                           x.RequireHttpsMetadata = false;
+                           x.SaveToken = true;
+                           x.TokenValidationParameters = new TokenValidationParameters
+                           {
+                               ValidateIssuerSigningKey = true,
+                               IssuerSigningKey = new SymmetricSecurityKey(key),
+                               ValidateIssuer = false,
+                               ValidateAudience = false
+                           };
+                       });
+
+            //Database
             services.AddDbContext<AppDbContext>();
 
-            // In production, the Angular files will be served from this directory
             services.AddSpaStaticFiles(configuration =>
             {
                 configuration.RootPath = "ClientApp/dist";
             });
 
+            //DI
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
             services.AddScoped<IUserService, UserService>();
+            services.AddScoped<IAutoMapperProfile, AutoMapperProfile>();
         }
 
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
             if (env.IsDevelopment())
@@ -46,10 +72,9 @@ namespace CatDataBank
             else
             {
                 app.UseExceptionHandler("/Error");
-                // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
             }
-
+            app.UseAuthentication();
             app.UseHttpsRedirection();
             app.UseStaticFiles();
             app.UseSpaStaticFiles();
@@ -63,9 +88,6 @@ namespace CatDataBank
 
             app.UseSpa(spa =>
             {
-                // To learn more about options for serving an Angular SPA from ASP.NET Core,
-                // see https://go.microsoft.com/fwlink/?linkid=864501
-
                 spa.Options.SourcePath = "ClientApp";
 
                 if (env.IsDevelopment())

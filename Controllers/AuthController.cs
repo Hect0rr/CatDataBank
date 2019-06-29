@@ -1,16 +1,11 @@
 using System;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Tokens;
 using CatDataBank.Helper;
 using CatDataBank.Model;
 using CatDataBank.Model.Dto;
 using CatDataBank.Service;
-using AutoMapper;
 
 namespace CatDataBank.Controllers
 {
@@ -20,49 +15,64 @@ namespace CatDataBank.Controllers
     public class AuthController : Controller
     {
         private IUserService _userService;
+        private IAutoMapperProfile _mapper;
 
         private readonly AppSettings _appSettings;
         AppDbContext _applicationDbContext = new AppDbContext();
 
         public AuthController(
             IUserService userService,
+            IAutoMapperProfile mapper,
             IOptions<AppSettings> appSettings)
         {
             _userService = userService;
             _appSettings = appSettings.Value;
+            _mapper = mapper;
+        }
+
+        [AllowAnonymous]
+        [HttpGet]
+        public IActionResult Index()
+        {
+            return Ok(_applicationDbContext.Users);
         }
 
         [AllowAnonymous]
         [HttpPost]
         public IActionResult Authenticate([FromBody]UserDto userDto)
         {
-            var user = _userService.Authenticate(userDto.Email, userDto.Password);
-
-            if (user == null)
-                return BadRequest(new { message = "Username or password is incorrect" });
-
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(_appSettings.Secret);
-            var tokenDescriptor = new SecurityTokenDescriptor
+            try
             {
-                Subject = new ClaimsIdentity(new Claim[]
+                var token = _userService.Authenticate(userDto.Email, userDto.Password);
+                if (token == null)
+                    return BadRequest();
+                return Ok(new
                 {
-                    new Claim(ClaimTypes.Name, user.Id.ToString())
-                }),
-                Expires = DateTime.UtcNow.AddDays(7),
-                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
-            };
-            var token = tokenHandler.CreateToken(tokenDescriptor);
-            var tokenString = tokenHandler.WriteToken(token);
-
-            return Ok(new
+                    Username = userDto.Email,
+                    Token = token
+                });
+            }
+            catch
             {
-                Id = user.Id,
-                Username = user.Email,
-                FirstName = user.FirstName,
-                LastName = user.LastName,
-                Token = tokenString
-            });
+                return StatusCode(500);
+            }
+        }
+
+        [AllowAnonymous]
+        [HttpPost("register")]
+        public IActionResult Register([FromBody]UserDto userDto)
+        {
+            var user = _mapper.GetMapper().Map<User>(userDto);
+
+            try
+            {
+                _userService.Create(user, userDto.Password);
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
     }
 }

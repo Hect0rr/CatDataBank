@@ -3,47 +3,90 @@ using System.Collections.Generic;
 using System.Linq;
 using CatDataBank.Model;
 using CatDataBank.Helper;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Http;
 using System.Security.Claims;
 using System.Text.RegularExpressions;
+using System.IdentityModel.Tokens.Jwt;
+using System.Text;
+using Microsoft.Extensions.Options;
 
 namespace CatDataBank.Service
 {
     public interface IUserService
     {
-        User Authenticate(string username, string password);
+        string Authenticate(string username, string password);
+        User Create(User user, string password);
         IEnumerable<User> GetAll();
         User GetById(int id);
-        string GetContextUserId();
     }
 
     public class UserService : IUserService
     {
         private AppDbContext _context;
         private IHttpContextAccessor _httpContextAccessor;
+        private readonly AppSettings _appSettings;
 
-
-        public UserService(AppDbContext context, IHttpContextAccessor httpContextAccessor)
+        public UserService(AppDbContext context, IHttpContextAccessor httpContextAccessor, IOptions<AppSettings> appSettings)
         {
             _context = context;
             _httpContextAccessor = httpContextAccessor;
+            _appSettings = appSettings.Value;
         }
 
-        public User Authenticate(string email, string password)
+
+
+        public String Authenticate(string email, string password)
         {
             if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
                 return null;
 
             var user = _context.Users.SingleOrDefault(x => x.Email == email);
 
-            if (user == null || !user.IsActive)
+            if (user == null)
                 return null;
 
-            // if (!VerifyPasswordHash(password, user.PasswordHash, user.PasswordSalt))
-            //     return null;
+            if (!VerifyPasswordHash(password, user.PasswordHash, user.PasswordSalt))
+                return null;
+
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var key = Encoding.ASCII.GetBytes(_appSettings.Secret);
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(new Claim[]
+                {
+                    new Claim(ClaimTypes.Name, user.Id.ToString())
+                }),
+                Expires = DateTime.UtcNow.AddDays(7),
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+            };
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+            var tokenString = tokenHandler.WriteToken(token);
+
+            return tokenString;
+        }
+
+        public User Create(User user, string password)
+        {
+            // validation
+            if (string.IsNullOrWhiteSpace(password))
+                throw new Exception("Password is required");
+
+            if (_context.Users.Any(x => x.Email == user.Email))
+                throw new Exception($"Username {user.Email} is already taken");
+
+            byte[] passwordHash, passwordSalt;
+            CreatePasswordHash(password, out passwordHash, out passwordSalt);
+
+            user.PasswordHash = passwordHash;
+            user.PasswordSalt = passwordSalt;
+
+            _context.Users.Add(user);
+            _context.SaveChanges();
 
             return user;
         }
+
 
         public IEnumerable<User> GetAll()
         {
@@ -84,20 +127,6 @@ namespace CatDataBank.Service
             }
 
             return true;
-        }
-
-        public string GetContextUserId()
-        {
-            return _httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.Name).Value;
-        }
-
-        private string GenerateToken()
-        {
-            Guid g = Guid.NewGuid();
-            string guidString = Convert.ToBase64String(g.ToByteArray());
-            guidString = Regex.Replace(guidString, @"[/;?:@=&+=]", "");
-
-            return guidString;
         }
     }
 }
