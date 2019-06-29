@@ -21,11 +21,11 @@ namespace CatDataBank.Controllers
         }
 
         [HttpPost]
-        public IActionResult AddCat([FromBody]Cat cat)
+        public IActionResult AddCat([FromBody]Cat[] cats)
         {
             try
             {
-                _appDbContext.Cats.Add(cat);
+                _appDbContext.Cats.AddRange(cats);
                 _appDbContext.SaveChanges();
                 return StatusCode(201);
             }
