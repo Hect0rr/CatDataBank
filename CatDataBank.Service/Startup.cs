@@ -54,7 +54,7 @@ namespace CatDataBank
 
             services.AddSpaStaticFiles(configuration =>
             {
-                configuration.RootPath = "ClientApp/dist";
+                configuration.RootPath = "../ClientApp/dist";
             });
 
             //DI
@@ -88,7 +88,7 @@ namespace CatDataBank
 
             app.UseSpa(spa =>
             {
-                spa.Options.SourcePath = "ClientApp";
+                spa.Options.SourcePath = "../ClientApp";
 
                 if (env.IsDevelopment())
                 {

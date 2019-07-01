@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using CatDataBank.Model;
 using CatDataBank.Helper;
 using Microsoft.IdentityModel.Tokens;
@@ -11,6 +12,8 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using Microsoft.Extensions.Options;
 
+[assembly: InternalsVisibleTo("CatDataBank.Test")]
+[assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")]
 namespace CatDataBank.Service
 {
     public interface IUserService
@@ -108,7 +111,7 @@ namespace CatDataBank.Service
             }
         }
 
-        internal virtual bool VerifyPasswordHash(string password, byte[] storedHash, byte[] storedSalt)
+         internal virtual bool VerifyPasswordHash(string password, byte[] storedHash, byte[] storedSalt)
         {
             if (password == null) throw new ArgumentNullException("password");
             if (string.IsNullOrWhiteSpace(password)) throw new ArgumentException("Value cannot be empty or whitespace only string.", "password");
