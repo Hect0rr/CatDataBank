@@ -11,18 +11,14 @@ namespace CatDataBank.Controllers
 {
     public class ApiControllerBase : Controller
     {
-        public virtual IActionResult Success(object response = null)
+        public virtual IActionResult Success(object response)
         {
-            if (response == null)
-                return Ok();
             return Ok(response);
         }
 
-        public virtual IActionResult Error(object response = null)
+        public virtual IActionResult Error(object response)
         {
-            if (response == null)
-                return BadRequest();
-            return BadRequest(response);
+            return NotFound(response);
         }
 
         public virtual StatusCodeResult InternalError()

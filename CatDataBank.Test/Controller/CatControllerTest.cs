@@ -49,7 +49,7 @@ namespace CatDataBank.Test.Controller
 
             //Assert
             _catService.Verify(a => a.GetCats(), Times.Once);
-            result.Should().Be(_catController.Object.Error());
+            result.Should().Be(_catController.Object.Error(It.IsAny<object>()));
         }
 
         [Fact]

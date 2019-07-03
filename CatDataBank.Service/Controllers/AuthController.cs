@@ -34,7 +34,7 @@ namespace CatDataBank.Controllers
             {
                 var token = _userService.Authenticate(userDto.Email, userDto.Password);
                 if (token == null)
-                    return Error();
+                    return Error(new {Message = "Les informations sont incorrects"});
                 return Success(new
                 {
                     Username = userDto.Email,
@@ -56,7 +56,7 @@ namespace CatDataBank.Controllers
             try
             {
                 _userService.Create(user, userDto.Password);
-                return Success();
+                return Success(null);
             }
             catch (Exception ex)
             {

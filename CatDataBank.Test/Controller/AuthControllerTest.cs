@@ -65,7 +65,7 @@ namespace CatDataBank.Test.Controller
 
             //Assert
             _userService.Verify(a => a.Authenticate(userDto.Email, userDto.Password), Times.Once);
-            result.Should().Be(_authController.Object.Error());
+            result.Should().Be(_authController.Object.Error(It.IsAny<object>()));
         }
 
         [Fact]
