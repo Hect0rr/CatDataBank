@@ -12,29 +12,18 @@ namespace CatDataBank.Controllers
     [Authorize]
     [ApiController]
     [Route("api/v1/[controller]")]
-    public class AuthController : Controller
+    public class AuthController : ApiControllerBase
     {
         private IUserService _userService;
         private IAutoMapperProfile _mapper;
 
-        private readonly AppSettings _appSettings;
-        AppDbContext _applicationDbContext = new AppDbContext();
-
         public AuthController(
             IUserService userService,
-            IAutoMapperProfile mapper,
-            IOptions<AppSettings> appSettings)
+            IAutoMapperProfile mapper
+            )
         {
             _userService = userService;
-            _appSettings = appSettings.Value;
             _mapper = mapper;
-        }
-
-        [AllowAnonymous]
-        [HttpGet]
-        public IActionResult Index()
-        {
-            return Ok(_applicationDbContext.Users);
         }
 
         [AllowAnonymous]
@@ -45,8 +34,8 @@ namespace CatDataBank.Controllers
             {
                 var token = _userService.Authenticate(userDto.Email, userDto.Password);
                 if (token == null)
-                    return BadRequest();
-                return Ok(new
+                    return Error();
+                return Success(new
                 {
                     Username = userDto.Email,
                     Token = token
@@ -54,7 +43,7 @@ namespace CatDataBank.Controllers
             }
             catch
             {
-                return StatusCode(500);
+                return InternalError();
             }
         }
 
@@ -67,11 +56,11 @@ namespace CatDataBank.Controllers
             try
             {
                 _userService.Create(user, userDto.Password);
-                return Ok();
+                return Success();
             }
             catch (Exception ex)
             {
-                return BadRequest(new { message = ex.Message });
+                return Error(new { message = ex.Message });
             }
         }
     }

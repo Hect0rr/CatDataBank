@@ -12,6 +12,7 @@ using CatDataBank.Service;
 using CatDataBank.Helper;
 using Microsoft.AspNetCore.Http;
 using CatDataBank.Model;
+using CatDataBank.DataAccess;
 
 namespace CatDataBank
 {
@@ -61,6 +62,10 @@ namespace CatDataBank
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IAutoMapperProfile, AutoMapperProfile>();
+            services.AddScoped<IUserDataAccess, UserDataAccess>();
+            services.AddScoped<ITokenHandler, Helper.TokenHandler>();
+            services.AddScoped<ICatDataAccess, CatDataAccess>();
+            services.AddScoped<ICatService, CatService>();
         }
 
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)

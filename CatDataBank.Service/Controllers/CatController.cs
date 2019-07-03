@@ -1,37 +1,47 @@
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Authorization;
+using CatDataBank.Service;
 using CatDataBank.Model;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace CatDataBank.Controllers
 {
 
-
     [Authorize]
     [ApiController]
     [Route("api/v1/[controller]")]
-    public class CatController : Controller
+    public class CatController : ApiControllerBase
     {
-        AppDbContext _appDbContext = new AppDbContext();
+        private readonly ICatService _catService;
 
+        public CatController(ICatService catService)
+        {
+            _catService = catService;
+        }
 
         [HttpGet]
         public IActionResult GetCats()
         {
-            return Ok(_appDbContext.Cats);
-        }
-
-        [HttpPost]
-        public IActionResult AddCat([FromBody]Cat[] cats)
-        {
             try
             {
-                _appDbContext.Cats.AddRange(cats);
-                _appDbContext.SaveChanges();
-                return StatusCode(201);
+                return Success(_catService.GetCats());
             }
             catch
             {
-                return StatusCode(500);
+                return InternalError();
+            }
+        }
+
+        [HttpPost]
+        public IActionResult AddCat([FromBody] Cat[] cats)
+        {
+            try
+            {
+                _catService.AddCats(cats);
+                return Created();
+            }
+            catch
+            {
+                return InternalError();
             }
 
         }

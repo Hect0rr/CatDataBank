@@ -1,40 +1,28 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.CompilerServices;
-using CatDataBank.Model;
+using CatDataBank.DataAccess;
 using CatDataBank.Helper;
-using Microsoft.IdentityModel.Tokens;
+using CatDataBank.Model;
 using Microsoft.AspNetCore.Http;
-using System.Security.Claims;
-using System.Text.RegularExpressions;
-using System.IdentityModel.Tokens.Jwt;
-using System.Text;
-using Microsoft.Extensions.Options;
 
-[assembly: InternalsVisibleTo("CatDataBank.Test")]
-[assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")]
+[assembly : InternalsVisibleTo("CatDataBank.Test")]
+[assembly : InternalsVisibleTo("DynamicProxyGenAssembly2")]
 namespace CatDataBank.Service
 {
     public interface IUserService
     {
         string Authenticate(string username, string password);
         User Create(User user, string password);
-        IEnumerable<User> GetAll();
-        User GetById(int id);
     }
 
     public class UserService : IUserService
     {
-        private AppDbContext _context;
-        private IHttpContextAccessor _httpContextAccessor;
-        private readonly AppSettings _appSettings;
-
-        public UserService(AppDbContext context, IHttpContextAccessor httpContextAccessor, IOptions<AppSettings> appSettings)
+        private readonly IUserDataAccess _userDataAccess;
+        private readonly ITokenHandler _tokenHandler;
+        public UserService(IUserDataAccess userDataAccess, ITokenHandler tokenHandler)
         {
-            _context = context;
-            _httpContextAccessor = httpContextAccessor;
-            _appSettings = appSettings.Value;
+            _userDataAccess = userDataAccess;
+            _tokenHandler = tokenHandler;
         }
 
         public String Authenticate(string email, string password)
@@ -42,7 +30,7 @@ namespace CatDataBank.Service
             if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
                 return null;
 
-            var user = _context.Users.SingleOrDefault(x => x.Email == email);
+            var user = _userDataAccess.GetUserByEmail(email);
 
             if (user == null)
                 return null;
@@ -50,21 +38,7 @@ namespace CatDataBank.Service
             if (!VerifyPasswordHash(password, user.PasswordHash, user.PasswordSalt))
                 return null;
 
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(_appSettings.Secret);
-            var tokenDescriptor = new SecurityTokenDescriptor
-            {
-                Subject = new ClaimsIdentity(new Claim[]
-                {
-                    new Claim(ClaimTypes.Name, user.Id.ToString())
-                }),
-                Expires = DateTime.UtcNow.AddDays(7),
-                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
-            };
-            var token = tokenHandler.CreateToken(tokenDescriptor);
-            var tokenString = tokenHandler.WriteToken(token);
-
-            return tokenString;
+            return _tokenHandler.GenerateToken(user.Id);
         }
 
         public User Create(User user, string password)
@@ -73,7 +47,7 @@ namespace CatDataBank.Service
             if (string.IsNullOrWhiteSpace(password))
                 throw new Exception("Password is required");
 
-            if (_context.Users.Any(x => x.Email == user.Email))
+            if (_userDataAccess.UserExists(user.Email))
                 throw new Exception($"Username {user.Email} is already taken");
 
             byte[] passwordHash, passwordSalt;
@@ -82,21 +56,10 @@ namespace CatDataBank.Service
             user.PasswordHash = passwordHash;
             user.PasswordSalt = passwordSalt;
 
-            _context.Users.Add(user);
-            _context.SaveChanges();
+            _userDataAccess.AddUser(user);
+            _userDataAccess.Commit();
 
             return user;
-        }
-
-
-        public IEnumerable<User> GetAll()
-        {
-            return _context.Users;
-        }
-
-        public User GetById(int id)
-        {
-            return _context.Users.Find(id);
         }
 
         internal virtual void CreatePasswordHash(string password, out byte[] passwordHash, out byte[] passwordSalt)
@@ -104,21 +67,21 @@ namespace CatDataBank.Service
             if (password == null) throw new ArgumentNullException("password");
             if (string.IsNullOrWhiteSpace(password)) throw new ArgumentException("Value cannot be empty or whitespace only string.", "password");
 
-            using (var hmac = new System.Security.Cryptography.HMACSHA512())
+            using(var hmac = new System.Security.Cryptography.HMACSHA512())
             {
                 passwordSalt = hmac.Key;
                 passwordHash = hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(password));
             }
         }
 
-         internal virtual bool VerifyPasswordHash(string password, byte[] storedHash, byte[] storedSalt)
+        internal virtual bool VerifyPasswordHash(string password, byte[] storedHash, byte[] storedSalt)
         {
             if (password == null) throw new ArgumentNullException("password");
             if (string.IsNullOrWhiteSpace(password)) throw new ArgumentException("Value cannot be empty or whitespace only string.", "password");
             if (storedHash.Length != 64) throw new ArgumentException("Invalid length of password hash (64 bytes expected).", "passwordHash");
             if (storedSalt.Length != 128) throw new ArgumentException("Invalid length of password salt (128 bytes expected).", "passwordHash");
 
-            using (var hmac = new System.Security.Cryptography.HMACSHA512(storedSalt))
+            using(var hmac = new System.Security.Cryptography.HMACSHA512(storedSalt))
             {
                 var computedHash = hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(password));
                 for (int i = 0; i < computedHash.Length; i++)

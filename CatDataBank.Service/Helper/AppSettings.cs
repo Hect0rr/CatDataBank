@@ -7,5 +7,8 @@ namespace CatDataBank.Helper
     public class AppSettings
     {
         public string Secret { get; set; }
+        
+        //Hour
+        public int TokenExpiryDelay { get; set; }
     }
 }
