@@ -29,7 +29,7 @@ namespace CatDataBank.Helper
                 {
                 new Claim(ClaimTypes.Name, userId.ToString())
                 }),
-                Expires = DateTime.UtcNow.AddDays(_appSettings.TokenExpiryDelay),
+                Expires = DateTime.UtcNow.AddHours(_appSettings.TokenExpiryDelay),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
             };
             var token = tokenHandler.CreateToken(tokenDescriptor);

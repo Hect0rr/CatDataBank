@@ -41,9 +41,9 @@ namespace CatDataBank.Controllers
                     Token = token
                 });
             }
-            catch
+            catch(Exception ex)
             {
-                return InternalError();
+                return Error(new{Message = ex.Message});
             }
         }
 

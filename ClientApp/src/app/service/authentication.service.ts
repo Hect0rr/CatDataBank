@@ -19,6 +19,7 @@ export class AuthenticationService {
   }
 
   postLogin(email: string, password: string) {
+    console.log(email)
     return this.httpClient.post<boolean>("api/v1/auth", {
       "email": email,
       "password": password
