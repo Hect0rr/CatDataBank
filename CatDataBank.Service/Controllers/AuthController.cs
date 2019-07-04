@@ -34,16 +34,16 @@ namespace CatDataBank.Controllers
             {
                 var token = _userService.Authenticate(userDto.Email, userDto.Password);
                 if (token == null)
-                    return Error(new {Message = "Les informations sont incorrects"});
+                    return Error(new {Message = "Les informations fournies sont incorrects"});
                 return Success(new
                 {
                     Username = userDto.Email,
                     Token = token
                 });
             }
-            catch(Exception ex)
+            catch
             {
-                return Error(new{Message = ex.Message});
+                return Error(new {Message = "Les informations fournies sont incorrects"});
             }
         }
 
@@ -56,11 +56,11 @@ namespace CatDataBank.Controllers
             try
             {
                 _userService.Create(user, userDto.Password);
-                return Success(null);
+                return Success(new { Message = "Opération réussi" });
             }
-            catch (Exception ex)
+            catch
             {
-                return Error(new { message = ex.Message });
+                return Error(new { Message = "Impossible de créer cet identifiant" });
             }
         }
     }

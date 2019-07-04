@@ -17,8 +17,8 @@ namespace CatDataBank.Model
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             optionsBuilder.EnableSensitiveDataLogging();
-            InMemoryDbContextOptionsExtensions.UseInMemoryDatabase(optionsBuilder, "CatDataBank");
-            //optionsBuilder.UseSqlServer("Server=ALIENWARE;Database=NergiePool;Trusted_Connection=True;");
+            // InMemoryDbContextOptionsExtensions.UseInMemoryDatabase(optionsBuilder, "CatDataBank");
+            optionsBuilder.UseSqlServer(@"Server=localhost\SQLEXPRESS;Database=catdatabank;Trusted_Connection=True;");
             base.OnConfiguring(optionsBuilder);
         }
     }

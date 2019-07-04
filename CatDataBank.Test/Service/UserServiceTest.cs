@@ -65,8 +65,10 @@ namespace CatDataBank.Test.Service
         [Fact]
         public void Authenticate_UserNull()
         {
-            //Act
+            //Arrange
             var email = _fixture.Create<string>();
+
+            //Act
             var result = _userService.Object.Authenticate(email, _fixture.Create<string>());
 
             //Assert
