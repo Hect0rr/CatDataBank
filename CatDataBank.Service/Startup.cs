@@ -1,18 +1,19 @@
-using System.Threading.Tasks;
 using System.Text;
+using System.Threading.Tasks;
+using CatDataBank.DataAccess;
+using CatDataBank.Helper;
+using CatDataBank.Model;
+using CatDataBank.Service;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.SpaServices.AngularCli;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using CatDataBank.Service;
-using CatDataBank.Helper;
-using Microsoft.AspNetCore.Http;
-using CatDataBank.Model;
-using CatDataBank.DataAccess;
+using Microsoft.IdentityModel.Tokens;
 
 namespace CatDataBank
 {
@@ -34,21 +35,21 @@ namespace CatDataBank
             var appSettings = Configuration.GetSection("AppSettings").Get<AppSettings>();
             var key = Encoding.ASCII.GetBytes(appSettings.Secret);
             services.AddAuthentication(x =>
-                       {
-                           x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                           x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-                       }).AddJwtBearer(x =>
-                       {
-                           x.RequireHttpsMetadata = false;
-                           x.SaveToken = true;
-                           x.TokenValidationParameters = new TokenValidationParameters
-                           {
-                               ValidateIssuerSigningKey = true,
-                               IssuerSigningKey = new SymmetricSecurityKey(key),
-                               ValidateIssuer = false,
-                               ValidateAudience = false
-                           };
-                       });
+            {
+                x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            }).AddJwtBearer(x =>
+            {
+                x.RequireHttpsMetadata = false;
+                x.SaveToken = true;
+                x.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(key),
+                    ValidateIssuer = false,
+                    ValidateAudience = false
+                };
+            });
 
             //Database
             services.AddDbContext<AppDbContext>();
