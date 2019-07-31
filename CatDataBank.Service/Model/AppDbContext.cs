@@ -25,7 +25,7 @@ namespace CatDataBank.Model
         {
             optionsBuilder.EnableSensitiveDataLogging();
             // todo : mettre le connection string dans le appsettings
-            optionsBuilder.UseSqlServer(@"Server=localhost\SQLEXPRESS;Database=catdatabank;Trusted_Connection=True;");
+            optionsBuilder.UseSqlServer(@"***");
         }
     }
 }
